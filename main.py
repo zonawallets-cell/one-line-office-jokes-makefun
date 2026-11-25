@@ -17,13 +17,22 @@ MAX_CHARS = 199
 
 
 def validate(text):
-    """Enforce the RULES.txt gate: UTF-8, 1-199 chars, not only whitespace."""
+    """Enforce the RULES.txt gate: UTF-8, 1-199 chars, not only whitespace.
+
+    Also rejects leading/trailing whitespace (wasted bytes on the
+    size tie-break) and C0 control characters / DEL, which would
+    corrupt the single clean line the judge reads.
+    """
     if not isinstance(text, str):
         raise ValueError("entry must be text")
     if not text.strip():
         raise ValueError("entry must not be only whitespace")
     if "\n" in text or "\r" in text:
         raise ValueError("entry must be a single line")
+    if text != text.strip():
+        raise ValueError("entry must not have leading or trailing whitespace")
+    if any(ord(ch) < 0x20 or ord(ch) == 0x7F for ch in text):
+        raise ValueError("entry must not contain control characters")
     if len(text) > MAX_CHARS:
         raise ValueError("entry is %d chars, over the 199-char limit" % len(text))
     text.encode("utf-8")
